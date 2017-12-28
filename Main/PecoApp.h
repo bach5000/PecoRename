@@ -31,11 +31,6 @@ class PecoApp : public BApplication {
 		virtual void	ReadyToRun();
 		virtual	void	AboutRequested();
 
-		bool			NothingToDo();
-		void			New();
-		void			CreateScript(BMessage *msg);
-		void			DoIt();
-
 		Fenster			*fWindow;
 		FileListView	*fListView;
 		BList			*fList;
@@ -44,6 +39,12 @@ class PecoApp : public BApplication {
 		int32			fRenameMode;
 		BStatusBar		*fStatusBar;
 		Renamer			*fRenamers[MODE_TOTAL];
+
+	private:
+		void			New();
+		bool			NothingToDo();
+		void			CreateScript(BMessage *msg);
+		void			DoIt();
 };
 
 #endif

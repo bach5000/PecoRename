@@ -34,31 +34,12 @@ APP_MIME_SIG= application/x-vnd.pecora-PecoRename
 #	if two source files with the same name (source.c or source.cpp)
 #	are included from different directories.  Also note that spaces
 #	in folder names do not work well with this makefile.
-SRCS =  About.cpp  \
-        ConsistencyCheck.cpp  \
-        Fenster.cpp  \
-        FileListItem.cpp  \
-        FileListView.cpp  \
-        functions.cpp  \
-        main.cpp  \
-        MainView.cpp  \
-        PecoApp.cpp  \
-        PreviewColumn.cpp  \
-        Renamer.cpp  \
-        Renamer_Extension.cpp  \
-        Renamer_InsertReplace.cpp  \
-        Renamer_Numbering.cpp  \
-        Renamer_Remove.cpp  \
-        Renamer_SearchReplace.cpp  \
-        Renamer_UpperLower.cpp  \
-        StatusView.cpp
-
+SRCS= main.cpp constants.cpp functions.cpp Fenster.cpp FileListItem.cpp FileListView.cpp MainView.cpp PecoApp.cpp Renamer.cpp Renamer_SearchReplace.cpp Renamer_InsertReplace.cpp Renamer_Remove.cpp Renamer_Numbering.cpp Renamer_Extension.cpp Renamer_UpperLower.cpp About.cpp
 
 #	specify the resource definition files to use
 #	full path or a relative path to the resource file can be used.
-RDEFS= About.rdef  \
-       PecoRename.rdef
-
+RDEFS= PecoRename.rdef About.rdef
+	
 #	specify the resource files to use. 
 #	full path or a relative path to the resource file can be used.
 #	both RDEFS and RSRCS can be defined in the same makefile.
@@ -85,7 +66,7 @@ RSRCS=
 #		naming scheme you need to specify the path to the library
 #		and it's name
 #		library: my_lib.a entry: my_lib.a or path/my_lib.a
-LIBS= be columnlistview localestub textencoding tracker $(STDCPPLIBS)
+LIBS= /boot/system/lib/libbe.so /boot/system/lib/libstdc++.r4.so /boot/system/lib/libtextencoding.so /boot/system/lib/libtracker.so columnlistview
 
 #	specify additional paths to directories following the standard
 #	libXXX.so or libXXX.a naming scheme.  You can specify full paths
@@ -98,7 +79,7 @@ LIBPATHS=
 #	additional paths to look for system headers
 #	thes use the form: #include <header>
 #	source file directories are NOT auto-included here
-SYSTEM_INCLUDE_PATHS= $(shell findpaths -e B_FIND_PATH_HEADERS_DIRECTORY private/interface)
+SYSTEM_INCLUDE_PATHS= /boot/develop/headers/be /boot/develop/headers/cpp /boot/develop/headers/posix /boot/develop/lib /boot/beos/system/lib /boot/system/develop/headers/private/interface
 
 #	additional paths to look for local headers
 #	thes use the form: #include "header"
@@ -115,7 +96,7 @@ OPTIMIZE= FULL
 # 	locales/en.catkeys file. Use it as template for creating other
 # 	languages catkeys. All localization files must be placed
 # 	in "locales" sub-directory.
-LOCALES= en fr de it
+LOCALES=
 
 #	specify any preprocessor symbols to be defined.  The symbols will not
 #	have their values set automatically; you must supply the value (if any)
@@ -138,7 +119,7 @@ SYMBOLS =
 #	specify debug settings
 #	if TRUE will allow application to be run from a source-level
 #	debugger.  Note that this will disable all optimzation.
-DEBUGGER =
+DEBUGGER = 
 
 #	specify additional compiler flags for all files
 COMPILER_FLAGS= -Woverloaded-virtual -funsigned-bitfields -Wwrite-strings 
