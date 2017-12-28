@@ -31,7 +31,6 @@ Renamer_UpperLower::Renamer_UpperLower() : Renamer() {
 
 	myMenu->AddItem(new BMenuItem(REN_SET_UPPERCASE, new BMessage(MSG_RENAME_SETTINGS)));
 	myMenu->AddItem(new BMenuItem(REN_SET_LOWERCASE, new BMessage(MSG_RENAME_SETTINGS)));
-	// ADD these to constants.h
 	myMenu->AddItem(new BMenuItem(REN_SET_SENTENCECASE, new BMessage(MSG_RENAME_SETTINGS)));
 	myMenu->AddItem(new BMenuItem(REN_SET_TITLECASE, new BMessage(MSG_RENAME_SETTINGS)));
 	
