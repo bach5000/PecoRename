@@ -8,8 +8,9 @@
  *              Werner Freytag <freytag@gmx.de>
  */
 
+#include <strstream.h>
+
 #include <Alert.h>
-#include <Catalog.h>
 #include <PopUpMenu.h>
 #include <MenuItem.h>
 #include <Beep.h>
@@ -22,22 +23,20 @@
 #include "functions.h"
 #include "Renamer_UpperLower.h"
 
-
-#undef B_TRANSLATION_CONTEXT
-#define B_TRANSLATION_CONTEXT "Renamer_UpperLower"
-
 Renamer_UpperLower::Renamer_UpperLower() : Renamer() {
 
-	fName 		= B_TRANSLATE("Uppercase / lowercase");
+	fName 		= REN_UPPERLOWER;
 
-	BPopUpMenu	*myMenu = new BPopUpMenu(B_TRANSLATE("Please select"));
+	BPopUpMenu	*myMenu = new BPopUpMenu(STR_PLEASE_SELECT);
 
-	myMenu->AddItem(new BMenuItem(B_TRANSLATE("UPPERCASE"), new BMessage(MSG_RENAME_SETTINGS)));
-	myMenu->AddItem(new BMenuItem(B_TRANSLATE("lowercase"), new BMessage(MSG_RENAME_SETTINGS)));
-
+	myMenu->AddItem(new BMenuItem(REN_SET_UPPERCASE, new BMessage(MSG_RENAME_SETTINGS)));
+	myMenu->AddItem(new BMenuItem(REN_SET_LOWERCASE, new BMessage(MSG_RENAME_SETTINGS)));
+	myMenu->AddItem(new BMenuItem(REN_SET_SENTENCECASE, new BMessage(MSG_RENAME_SETTINGS)));
+	myMenu->AddItem(new BMenuItem(REN_SET_TITLECASE, new BMessage(MSG_RENAME_SETTINGS)));
+	
 	myMenu->ItemAt(0)->SetMarked(true);
 
-	fUpperOrLower = new BMenuField(NULL, B_TRANSLATE("Convert to"), myMenu);
+	fUpperOrLower = new BMenuField(NULL, REN_SET_CONVERTTO, myMenu);
 
 	BLayoutBuilder::Group<>(this, B_VERTICAL)
 		.SetInsets(B_USE_WINDOW_INSETS)
@@ -61,18 +60,40 @@ void Renamer_UpperLower::RenameList(BList *FileList) {
 		char	*tempStr = new char[laenge + 1];
 
 		uint8	Buchstabe, Byte0 = 0;
-		bool	MakeUpper = !bool(fUpperOrLower->Menu()->IndexOf(fUpperOrLower->Menu()->FindMarked()));
+		int32   choice = fUpperOrLower->Menu()->IndexOf(fUpperOrLower->Menu()->FindMarked());
+	
+		int32 isCap = 1;
+		
 		for (int j = 0; j < laenge; j++) {
 			Buchstabe = ListItem->fName.ByteAt(j);
 			if (Buchstabe>=0xc0) {
 				Byte0 = Buchstabe;
 			} else {
-				if (MakeUpper) {
-					if (((Buchstabe>=0x61) && (Buchstabe<=0x7a)) || ( (Byte0==0xc3) && (Buchstabe>=0xa0 && Buchstabe<=0xb6) || (Buchstabe>=0xb8 && Buchstabe<=0xbe)))
+				switch (choice){
+					case 0: if (((Buchstabe>=0x61) && (Buchstabe<=0x7a)) || ( (Byte0==0xc3) && (Buchstabe>=0xa0 && Buchstabe<=0xb6) || (Buchstabe>=0xb8 && Buchstabe<=0xbe)))
 						Buchstabe &= ~32;
-				} else { // kleinbuchstaben
-					if (((Buchstabe>=0x41) && (Buchstabe<=0x5a)) || ( (Byte0==0xc3) && (Buchstabe>=0x80 && Buchstabe<=0x96) || (Buchstabe>=0x98 && Buchstabe<=0x9e)))
+						break;
+					case 1: if (((Buchstabe>=0x41) && (Buchstabe<=0x5a)) || ( (Byte0==0xc3) && (Buchstabe>=0x80 && Buchstabe<=0x96) || (Buchstabe>=0x98 && Buchstabe<=0x9e)))
 						Buchstabe |= 32;
+						break;
+					case 2: 
+						// Capitalize only the first letter.
+						if (isCap == 1)
+							{isCap = 0; Buchstabe &= ~32;}
+						else {
+							if (((Buchstabe>=0x41) && (Buchstabe<=0x5a)) || ( (Byte0==0xc3) && (Buchstabe>=0x80 && Buchstabe<=0x96) || (Buchstabe>=0x98 && Buchstabe<=0x9e)))
+								Buchstabe |= 32;
+						}
+						break;
+					case 3:
+						if (isCap == 1) {isCap = 0; Buchstabe &= ~32;}
+						else {
+							if (((Buchstabe>=0x41) && (Buchstabe<=0x5a)) || ( (Byte0==0xc3) && (Buchstabe>=0x80 && Buchstabe<=0x96) || (Buchstabe>=0x98 && Buchstabe<=0x9e)))
+									Buchstabe |= 32;
+						}
+						// If space is found, toggle caps again.
+						if (Buchstabe==0x20) isCap = 1;
+						break;
 				}
 				Byte0 = 0;
 			}

@@ -7,107 +7,115 @@
  * Original Author:
  *              Werner Freytag <freytag@gmx.de>
  */
-#include <Catalog.h>
+
 #include <FindDirectory.h>
 #include <MenuBar.h>
 #include <MenuItem.h>
-#include <MessageFormat.h>
-#include <StopWatch.h>
+
 #include "Fenster.h"
 
 #include "constants.h"
 #include "functions.h"
-#include "ConsistencyCheck.h"
-
-#include <stdio.h>
-
-#undef B_TRANSLATION_CONTEXT
-#define B_TRANSLATION_CONTEXT "functions"
 
 #define PREFS_FILENAME "PecoRename_settings"
 
+int SortByName(const void *item1, const void *item2) {
+
+	FileListItem	**Item1 = (FileListItem **)item1;
+	FileListItem	**Item2 = (FileListItem **)item2;
+
+	return (*Item1)->fName.ICompare( (*Item2)->fName );
+
+}
+
+int SortBySize(const void *item1, const void *item2) {
+	FileListItem	**Item1 = (FileListItem **)item1;
+	FileListItem	**Item2 = (FileListItem **)item2;
+
+	if ( (*Item1)->fGroesse > (*Item2)->fGroesse ) return 1;
+	else
+			if ( (*Item1)->fGroesse < (*Item2)->fGroesse ) return -1;
+			else return 0;
+}
+
+int SortByDate(const void *item1, const void *item2) {
+	FileListItem	**Item1 = (FileListItem **)item1;
+	FileListItem	**Item2 = (FileListItem **)item2;
+
+	if ( (*Item1)->fZeit > (*Item2)->fZeit ) return 1;
+	else
+			if ( (*Item1)->fZeit < (*Item2)->fZeit ) return -1;
+			else return 0;
+}
+
 void MakeList() {
-	BList numberingList;
-	BList *FileList = ((PecoApp *)be_app)->fList;
-	if (((PecoApp *)be_app)->fRenameMode == 3)  // When numbering the items it's important the order choose by the user
-	{
-		FileListView *sortedList = ((PecoApp *)be_app)->fListView;
-		for (int32 i = 0; i < sortedList->CountRows(); i++ )
-			numberingList.AddItem((FileListItem *)sortedList->ItemAt(i));
-		FileList = &numberingList;
-	}
+	BList		*FileList = ((PecoApp *)be_app)->fList;
+
 	((PecoApp *)be_app)->fWindow->Lock();
+	((PecoApp *)be_app)->fStatusBar->SetText(STATUS_SORTING);
+// Keep the code below until sortings by BColumnListView is fully tested.
+#if 0
+	do {
+		if (strcmp(SortButton->Name(), "Name") == 0) {
+			((PecoApp *)be_app)->fListView->SortItems(SortByName); FileList->SortItems(SortByName); break; }
+		if (strcmp(SortButton->Name(), "Date") == 0) {
+			((PecoApp *)be_app)->fListView->SortItems(SortByDate); FileList->SortItems(SortByDate); break; }
+		((PecoApp *)be_app)->fListView->SortItems(SortBySize); FileList->SortItems(SortBySize);
+	} while (false);
+#endif
+	((PecoApp *)be_app)->fStatusBar->SetText(STATUS_PREVIEW);
+
 	((PecoApp *)be_app)->fRenamers[((PecoApp *)be_app)->fRenameMode]->RenameList(FileList);
 
-	{
-		BStopWatch stopWatch("CheckDup");
-		ConsistencyCheck(FileList).CheckForDuplicates();
-	}
+	// Auf Duplikate überprüfen und markieren
+	((PecoApp *)be_app)->fStatusBar->SetText(STATUS_CHECKDUPS);
+	FileListItem	*ListItem;
 
-
-	if (((PecoApp *)be_app)->fRenameMode == 3)
-	{
-		numberingList.MakeEmpty();
-	}
+	((PecoApp *)be_app)->fStatusBar->Reset(STATUS_STATUS);
 
 	((PecoApp *)be_app)->fWindow->Unlock();
 	UpdateWindowStatus();
 }
 
+BString ShortenString(BString aString, const float width) {
+
+	const char*	stringArray[] = { aString.String() };
+
+	char*	resultString = (char *)malloc( aString.Length() + 4 );
+	char*	resultArray[] = { resultString};
+
+	be_plain_font->GetTruncatedStrings(stringArray, 1, B_TRUNCATE_END, width, resultArray);
+
+	aString = resultString;
+	free( resultString );
+
+	return aString;
+}
+
 
 void UpdateWindowStatus() {
 	BButton		*okButton = (BButton *)((PecoApp *)be_app)->fWindow->FindView("DoIt");
-	StatusView  *statusView = (StatusView *)((PecoApp *)be_app)->fWindow->FindView("statusview");
-	FileListView *fileListView = (FileListView *)((PecoApp *)be_app)->fWindow->FindView("fileListView");
 	((PecoApp *)be_app)->fWindow->Lock();
 
-	BMenuItem	*scriptMenu = (BMenuItem *)((PecoApp *)be_app)->fWindow->KeyMenuBar()->FindItem(B_TRANSLATE("Create shell script..."));
+	BMenuItem	*scriptMenu = (BMenuItem *)((PecoApp *)be_app)->fWindow->KeyMenuBar()->FindItem(STR_MENU_CREATE_SCRIPT);
 
-	bool isenabled = !((PecoApp *)be_app)->NothingToDo();
+	bool isenabled = false; // Is Ok-Button enabled?
+
+	do {
+		if (((PecoApp *)be_app)->fList->IsEmpty()) {
+			((PecoApp *)be_app)->fStatusBar->SetText(STATUS_SELECT_FILES);
+			break;
+		}
+		// else:
+		isenabled = true;
+		((PecoApp *)be_app)->fStatusBar->SetText(STATUS_WAITING);
+	} while (false);
 
 	okButton->SetEnabled(isenabled);
 	scriptMenu->SetEnabled(isenabled);
 
-	BString itemsNumber;
-	BString renamesNumber;
-	BString duplicatesNumber;
-
-	BList *fileList = ((PecoApp *)be_app)->fList;
-	static BMessageFormat formatItems(B_TRANSLATE("{0, plural,"
-		"=0{no items}"
-		"=1{1 item}"
-		"other{# items}}" ));
-	formatItems.Format(itemsNumber, fileList->CountItems());
-
-	int duplicates = 0;
-	int renames = 0;
-
-	for (int32 i = 0; i < fileList->CountItems(); i++ ) {
-		if	(((FileListItem *)fileList->ItemAt(i))->fNewName != ""){
-			renames++;
-			if	(((FileListItem *)fileList->ItemAt(i))->Error() != 0)
-				duplicates++;
-		}
-	}
-	if (renames > 0)
-	{
-		static BMessageFormat formatRenamed(B_TRANSLATE("{0, plural,"
-		"=0{no renames}"
-		"=1{1 rename}"
-		"other{# renames}}" ));
-		formatRenamed.Format(renamesNumber, renames);
-	}
-	if (duplicates > 0)
-	{
-		static BMessageFormat formatDuplicated(B_TRANSLATE("{0, plural,"
-		"=0{no duplicates}"
-		"=1{1 duplicate}"
-		"other{# duplicates}}" ));
-		formatDuplicated.Format(duplicatesNumber, duplicates);
-	}
-	statusView->Update(itemsNumber, renamesNumber, duplicatesNumber);
-
 	((PecoApp *)be_app)->fWindow->Unlock();
+
 }
 
 BFile PrefsFile( int32 mode ) {

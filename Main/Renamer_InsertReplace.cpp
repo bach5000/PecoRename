@@ -8,10 +8,9 @@
  *              Werner Freytag <freytag@gmx.de>
  */
 
-#include <strstream>
+#include <strstream.h>
 
 #include <Alert.h>
-#include <Catalog.h>
 #include <PopUpMenu.h>
 #include <MenuItem.h>
 #include <Beep.h>
@@ -25,29 +24,25 @@
 #include "FileListItem.h"
 #include "Renamer_InsertReplace.h"
 
-#undef B_TRANSLATION_CONTEXT
-#define B_TRANSLATION_CONTEXT "Renamer_InsertReplace"
-
 Renamer_InsertReplace::Renamer_InsertReplace() : Renamer() {
 
-	fName 		= B_TRANSLATE("Insert / replace");
+	fName 		= REN_INSERTREPLACE;
 
-	BPopUpMenu	*myMenu = new BPopUpMenu(B_TRANSLATE("Please select"));
-	myMenu->AddItem(new BMenuItem(B_TRANSLATE("Insert"), new BMessage(MSG_RENAME_SETTINGS)));
-	myMenu->AddItem(new BMenuItem(B_TRANSLATE("Replace with"), new BMessage(MSG_RENAME_SETTINGS)));
+	BPopUpMenu	*myMenu = new BPopUpMenu(STR_PLEASE_SELECT);
+	myMenu->AddItem(new BMenuItem(REN_SET_INSERT, new BMessage(MSG_RENAME_SETTINGS)));
+	myMenu->AddItem(new BMenuItem(REN_SET_REPLACE, new BMessage(MSG_RENAME_SETTINGS)));
 
 	myMenu->ItemAt(0)->SetMarked(true);
 
-	fInsertOrReplace = new BMenuField(B_TRANSLATE("Insert or replace:"), myMenu);
+	fInsertOrReplace = new BMenuField(REN_SET_INSERTREPLACE, myMenu);
 
-	fText = new BTextControl( NULL, B_TRANSLATE("Text:"), NULL, new BMessage(MSG_RENAME_SETTINGS));
-	fText->SetModificationMessage(new BMessage(MSG_RENAME_SETTINGS));
-	fPosition = new BTextControl( NULL, B_TRANSLATE("At position:"), "0", new BMessage(MSG_RENAME_SETTINGS));
-	fPosition->SetModificationMessage(new BMessage(MSG_RENAME_SETTINGS));
+	fText = new BTextControl( NULL, REN_SET_TEXT, NULL, new BMessage(MSG_RENAME_SETTINGS));
 
-	myMenu = new BPopUpMenu(B_TRANSLATE("Please select"));
-	myMenu->AddItem(new BMenuItem(B_TRANSLATE("from the front (left)"), new BMessage(MSG_RENAME_SETTINGS)));
-	myMenu->AddItem(new BMenuItem(B_TRANSLATE("from the back (right)"), new BMessage(MSG_RENAME_SETTINGS)));
+	fPosition = new BTextControl( NULL, REN_SET_ATPOSITION, "0", new BMessage(MSG_RENAME_SETTINGS));
+
+	myMenu = new BPopUpMenu(STR_PLEASE_SELECT);
+	myMenu->AddItem(new BMenuItem(REN_SET_FROMLEFT, new BMessage(MSG_RENAME_SETTINGS)));
+	myMenu->AddItem(new BMenuItem(REN_SET_FROMRIGHT, new BMessage(MSG_RENAME_SETTINGS)));
 
 	myMenu->ItemAt(0)->SetMarked(true);
 
@@ -72,7 +67,7 @@ void Renamer_InsertReplace::RenameList(BList *FileList) {
 	BString		Text = fText->Text();
 
 	int			Position;
-	std::strstream	iStream, oStream;
+	strstream	iStream, oStream;
 	
 	do {
 		iStream << fPosition->Text(); iStream >> Position;

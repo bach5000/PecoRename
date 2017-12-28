@@ -9,7 +9,6 @@
  */
 
 #include <Alert.h>
-#include <Catalog.h>
 #include <Rect.h>
 #include <Button.h>
 #include <Font.h>
@@ -27,49 +26,29 @@
 #include "constants.h"
 #include "functions.h"
 
-
 #include "MainView.h"
 
-#undef B_TRANSLATION_CONTEXT
-#define B_TRANSLATION_CONTEXT "MainView"
-
-MainView::MainView() : BView ("mainView",  B_WILL_DRAW) {
+MainView::MainView() : BView ("mainView", B_FULL_UPDATE_ON_RESIZE) {
 
 	SetViewUIColor(B_PANEL_BACKGROUND_COLOR);
 
-	float iconSize = 24;
-	BBitmap* folder=new BBitmap(BRect(0,0, iconSize, iconSize), 0, B_RGBA32);
-	BMimeType type("application/x-vnd.Be-directory");
-	type.GetIcon(folder, B_MINI_ICON);
-
-	BButton* ChooseButton = new BButton("selectFiles", B_TRANSLATE(""),
+	BButton* ChooseButton = new BButton("selectFiles", STR_PLEASE_CHOOSE,
 		new BMessage(MSG_SELECT_FILES));
-	ChooseButton->SetIcon(folder);
-
-	BStringView* PathString = new BStringView("pfadView", B_TRANSLATE("Select your files and directories..."));
-	PathString->SetFont(be_bold_font);
-	PathString->SetExplicitMaxSize(BSize(550, 32));
-	PathString->SetTruncation(B_TRUNCATE_MIDDLE);
+	BTextControl* PathControl = new BTextControl("pfadView", STR_PATH, "", NULL);
 
 	FileListView* aFileView = new FileListView();
 
-	BScrollBar* scrollBar = (BScrollBar*)aFileView->FindView("horizontal_scroll_bar");
-
-	BGroupLayout* compoundTitle = BLayoutBuilder::Group<>(B_HORIZONTAL, 2)
-		.Add(ChooseButton)
-		.Add(PathString);
-
 	BGroupLayout *topBox = BLayoutBuilder::Group<>(B_VERTICAL)
 		.SetInsets(B_USE_WINDOW_INSETS)
+		.AddGroup(B_HORIZONTAL)
+			.Add(ChooseButton)
+			.Add(PathControl)
+		.End()
 		.Add(aFileView);
 
-	StatusView* statusView = new StatusView(scrollBar);
-	aFileView->AddStatusView(statusView);
-
 	BBox* top = new BBox("top");
-	top->SetLabel(B_TRANSLATE("Select your files and directories..."));
+	top->SetLabel(STR_TOPVIEW_TITLE);
 	top->AddChild(topBox->View());
-	top->SetLabel(compoundTitle->View());
 
 	BMessage prefs;
 	ReadPreferences("renamer", prefs);
@@ -91,20 +70,28 @@ MainView::MainView() : BView ("mainView",  B_WILL_DRAW) {
 	}
 
 	((PecoApp *)be_app)->fRenameMode = 0;
-	fCards->SetVisibleItem((int32)activeRenamer);
+	fCards->SetVisibleItem((int32)0);
 
+	BStringView* title = new BStringView("", STR_BOTTOMVIEW_TITLE);
+	title->SetFont(be_bold_font);
+	BMenuField* Field = new BMenuField( "selectMode", STR_MODE, fRenamers);
 
-	BMenuField* menuField = new BMenuField( "selectMode", "", fRenamers);
+	BGroupLayout* compoundTitle = BLayoutBuilder::Group<>(B_HORIZONTAL)
+		.Add(title)
+		.Add(Field);
+
 	BBox* bottom = new BBox("bottom");
-	bottom->SetLabel(menuField);
+	bottom->SetLabel(compoundTitle->View());
 	bottom->AddChild(cards);
 
 	// StatusBar
-	BStatusBar*	statusBar	= new BStatusBar( "statusBar", "", NULL);
-	statusBar->Hide();
+	BStatusBar*	statusBar	= new BStatusBar( "statusBar", STATUS_STATUS, NULL);
+	statusBar->SetText(STATUS_SELECT_FILES);
+	rgb_color color = { 70, 100, 180, 255};
+	statusBar->SetBarColor(color);
 
 	// Do it! - Button
-	BButton* DoItButton = new BButton( "DoIt", B_TRANSLATE("Rename"), new BMessage(MSG_DO_IT));
+	BButton* DoItButton = new BButton( "DoIt", STR_DO_IT, new BMessage(MSG_DO_IT));
 	DoItButton->SetEnabled(false);
 
 	BLayoutBuilder::Group<>(this, B_VERTICAL)
@@ -112,10 +99,8 @@ MainView::MainView() : BView ("mainView",  B_WILL_DRAW) {
 		.Add(top)
 		.Add(bottom)
 		.AddGroup(B_HORIZONTAL)
-			.Add(statusBar, 100)
-			.AddGlue()
-			.Add(DoItButton, 0); // TODO how does weigth works?
-
+			.Add(statusBar)
+			.Add(DoItButton);
 }
 
 
@@ -144,4 +129,3 @@ void MainView::AttachedToWindow() {
 		fRenamers->ItemAt(i)->SetTarget(this);
 	}
 }
-

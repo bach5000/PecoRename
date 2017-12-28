@@ -8,10 +8,9 @@
  *              Werner Freytag <freytag@gmx.de>
  */
 
-#include <strstream>
+#include <strstream.h>
 
 #include <Alert.h>
-#include <Catalog.h>
 #include <PopUpMenu.h>
 #include <MenuItem.h>
 #include <Beep.h>
@@ -24,31 +23,24 @@
 #include "FileListItem.h"
 #include "Renamer_Numbering.h"
 
-
-#undef B_TRANSLATION_CONTEXT
-#define B_TRANSLATION_CONTEXT "Renamer_Numbering"
-
 Renamer_Numbering::Renamer_Numbering() : Renamer() {
 
 	char *Modi[] = { "1, 2, 3, ...", "01, 02, 03, ...", "001, 002, 003, ...", "0001, 0002, 0003, ..."};
 
-	fName 		= B_TRANSLATE("Numbering");
+	fName 		= REN_NUMBERING;
 
-	BPopUpMenu	*myMenu = new BPopUpMenu(B_TRANSLATE("Please select"));
+	BPopUpMenu	*myMenu = new BPopUpMenu(STR_PLEASE_SELECT);
 	for ( uint32 i = 0; i < sizeof(Modi) / sizeof(char *); i++ )
 		myMenu->AddItem(new BMenuItem(Modi[i], new BMessage(MSG_RENAME_SETTINGS)));
 
 	myMenu->ItemAt(0)->SetMarked(true);
 
-	fFormat = new BMenuField( NULL, B_TRANSLATE("Format:"), myMenu);
+	fFormat = new BMenuField( NULL, REN_SET_FORMAT, myMenu);
 
-	fStartWith = new BTextControl( NULL, B_TRANSLATE("Start with:"), "0", new BMessage(MSG_RENAME_SETTINGS));
-	fStartWith->SetModificationMessage(new BMessage(MSG_RENAME_SETTINGS));
+	fStartWith = new BTextControl( NULL, REN_SET_STARTWITH, "0", new BMessage(MSG_RENAME_SETTINGS));
 
-	fTextBefore = new BTextControl( NULL, B_TRANSLATE("Text before:"), NULL, new BMessage(MSG_RENAME_SETTINGS));
-	fTextBefore->SetModificationMessage(new BMessage(MSG_RENAME_SETTINGS));
-	fTextBehind = new BTextControl( NULL, B_TRANSLATE("Text behind:"), NULL, new BMessage(MSG_RENAME_SETTINGS));
-	fTextBehind->SetModificationMessage(new BMessage(MSG_RENAME_SETTINGS));
+	fTextBefore = new BTextControl( NULL, REN_SET_TEXTBEFORE, NULL, new BMessage(MSG_RENAME_SETTINGS));
+	fTextBehind = new BTextControl( NULL, REN_SET_TEXTBEHIND, NULL, new BMessage(MSG_RENAME_SETTINGS));
 
 	BLayoutBuilder::Group<>(this, B_HORIZONTAL)
 		.SetInsets(B_USE_WINDOW_INSETS)
@@ -74,7 +66,7 @@ void Renamer_Numbering::RenameList(BList *FileList) {
 	Renamer :: RenameList(FileList);
 
 	int			Startzahl;
-	std::strstream	iStream, oStream;
+	strstream	iStream, oStream;
 	
 	if (strlen(fStartWith->Text())==0) {
 		Startzahl = 0;
@@ -101,7 +93,7 @@ void Renamer_Numbering::RenameList(BList *FileList) {
 		
 		ListItem = (FileListItem *)FileList->ItemAt(i);
 
-		std::strstream 	oStream;
+		strstream 	oStream;
 		BString		NummerString;
 		
 		oStream << i + Startzahl; oStream.put(0);
